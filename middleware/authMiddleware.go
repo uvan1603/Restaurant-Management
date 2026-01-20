@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	helper "golang-restaurant-management/helpers"
+	helper "restaurant-management/helpers"
 
 	"github.com/gin-gonic/gin"
 )

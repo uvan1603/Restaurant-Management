@@ -6,11 +6,10 @@ import (
 	"os"
 	"time"
 
-	"golang-restaurant-management/database"
+	"restaurant-management/database"
 
 	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
