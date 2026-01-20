@@ -12,15 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-  "github.com/go-playground/validator/v10"
-
-
 )
 
-var validate = validator.New()
-
-var orderCollection *mongo.Collection = database.OpenCollection(database.Client, "order")
+var orderCollection *mongo.Collection =
+	database.OpenCollection(database.Client, "orders")
 
 // GET ALL ORDERS
 func GetOrders() gin.HandlerFunc {
@@ -35,7 +30,7 @@ func GetOrders() gin.HandlerFunc {
 		}
 
 		var orders []models.Order
-		if err = cursor.All(ctx, &orders); err != nil {
+		if err := cursor.All(ctx, &orders); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -53,7 +48,11 @@ func GetOrderById() gin.HandlerFunc {
 		orderId := c.Param("order_id")
 		var order models.Order
 
-		err := orderCollection.FindOne(ctx, bson.M{"order_id": orderId}).Decode(&order)
+		err := orderCollection.FindOne(
+			ctx,
+			bson.M{"order_id": orderId},
+		).Decode(&order)
+
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
 			return
@@ -75,16 +74,17 @@ func CreateOrder() gin.HandlerFunc {
 			return
 		}
 
-		if err := validate.Struct(order); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Only validate fields provided by client
+		if order.Table_id == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "table_id is required"})
 			return
 		}
 
 		order.ID = primitive.NewObjectID()
 		order.Order_id = order.ID.Hex()
+		order.Order_Date = time.Now()
 		order.Created_at = time.Now()
 		order.Updated_at = time.Now()
-		order.Order_Date = time.Now()
 
 		result, err := orderCollection.InsertOne(ctx, order)
 		if err != nil {
@@ -103,26 +103,29 @@ func UpdateOrder() gin.HandlerFunc {
 		defer cancel()
 
 		orderId := c.Param("order_id")
-		var order models.Order
+		var input models.Order
 		var updateObj primitive.D
 
-		if err := c.BindJSON(&order); err != nil {
+		if err := c.BindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		if order.Table_id != nil {
-			updateObj = append(updateObj, bson.E{"table_id", order.Table_id})
+		if input.Table_id != nil {
+			updateObj = append(updateObj, bson.E{"table_id", input.Table_id})
 		}
 
-		order.Updated_at = time.Now()
-		updateObj = append(updateObj, bson.E{"updated_at", order.Updated_at})
+		if len(updateObj) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
+			return
+		}
+
+		updateObj = append(updateObj, bson.E{"updated_at", time.Now()})
 
 		result, err := orderCollection.UpdateOne(
 			ctx,
 			bson.M{"order_id": orderId},
 			bson.D{{"$set", updateObj}},
-			options.Update().SetUpsert(true),
 		)
 
 		if err != nil {
@@ -132,19 +135,4 @@ func UpdateOrder() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, result)
 	}
-}
-
-func OrderItemOrderCreator(order models.Order) string {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	order.Created_at = time.Now()
-	order.Updated_at = time.Now()
-	order.ID = primitive.NewObjectID()
-	order.Order_id = order.ID.Hex()
-
-	orderCollection.InsertOne(ctx, order)
-
-	return order.Order_id
 }

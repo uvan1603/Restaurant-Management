@@ -1,0 +1,56 @@
+# -------------------------------
+# Environment and Secrets
+# -------------------------------
+.env
+.env.local
+.env.*.local
+
+# -------------------------------
+# Go Build Artifacts
+# -------------------------------
+/bin/
+/build/
+/dist/
+/*.exe
+/*.dll
+/*.so
+/*.dylib
+*.out
+*.test
+
+# -------------------------------
+# Go Modules and Dependencies
+# -------------------------------
+/vendor/
+
+# -------------------------------
+# Logs and Reports
+# -------------------------------
+*.log
+*.coverprofile
+coverage.out
+
+# -------------------------------
+# IDE / Editor Files
+# -------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# -------------------------------
+# OS Generated Files
+# -------------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -------------------------------
+# Temporary / Cache Files
+# -------------------------------
+*.tmp
+*.cache
+*.bak

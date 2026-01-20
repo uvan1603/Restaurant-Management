@@ -15,6 +15,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var invoiceCollection *mongo.Collection = database.OpenCollection(database.Client, "invoices")
+
 type InvoiceViewFormat struct {
 	Invoice_id       string      `json:"invoice_id"`
 	Payment_method   string      `json:"payment_method"`
@@ -26,9 +28,7 @@ type InvoiceViewFormat struct {
 	Order_details    interface{} `json:"order_details"`
 }
 
-var invoiceCollection *mongo.Collection = database.OpenCollection(database.Client, "invoices")
-
-// GET ALL INVOICES
+/* ================= GET ALL INVOICES ================= */
 func GetInvoices() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -50,7 +50,7 @@ func GetInvoices() gin.HandlerFunc {
 	}
 }
 
-// GET INVOICE BY ID
+/* ================= GET INVOICE BY ID ================= */
 func GetInvoiceById() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -89,7 +89,7 @@ func GetInvoiceById() gin.HandlerFunc {
 	}
 }
 
-// CREATE INVOICE
+/* ================= CREATE INVOICE ================= */
 func CreateInvoice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
@@ -101,14 +101,13 @@ func CreateInvoice() gin.HandlerFunc {
 			return
 		}
 
-		// Ensure order exists
+		// check order exists
 		var order models.Order
 		if err := orderCollection.FindOne(ctx, bson.M{"order_id": invoice.Order_id}).Decode(&order); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "order not found"})
 			return
 		}
 
-		// Default payment status
 		if invoice.Payment_status == nil {
 			status := "PENDING"
 			invoice.Payment_status = &status
@@ -135,7 +134,7 @@ func CreateInvoice() gin.HandlerFunc {
 	}
 }
 
-// UPDATE INVOICE
+/* ================= UPDATE INVOICE ================= */
 func UpdateInvoice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
